@@ -1,61 +1,79 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 import time
 
-st.set_page_config(layout="centered")
-st.title("🦠 City-Level Virus Spread Simulation")
+st.set_page_config(layout="wide")
+st.title("🦠 Virus Spread Simulation on Map")
 
-city = st.selectbox("Select a City", ["Seoul", "New York", "London", "Tokyo", "Paris"])
+grid_size = st.slider("Grid Size", 5, 20, 10)
+spread_chance = st.slider("Infection Rate (%)", 0, 100, 30)
+city_center = {"lat": 37.5665, "lon": 126.9780}  # 서울 중심
 
-infection_rate = st.slider("Infection Rate (%)", 0, 100, 20) / 100
-death_rate = st.slider("Death Rate (%)", 0, 100, 5) / 100
+HEALTHY, INFECTED, RECOVERED, DEAD = 0, 1, 2, 3
+status_colors = {HEALTHY: "green", INFECTED: "red", RECOVERED: "blue", DEAD: "black"}
 
-grid_size = 20
-if "grid" not in st.session_state or st.button("Restart Simulation"):
+if "grid" not in st.session_state:
     st.session_state.grid = np.zeros((grid_size, grid_size), dtype=int)
-    infected_index = np.random.randint(0, grid_size), np.random.randint(0, grid_size)
-    st.session_state.grid[infected_index] = 1
+    mid = grid_size // 2
+    st.session_state.grid[mid, mid] = INFECTED
     st.session_state.step = 0
 
-def update_grid(grid):
+def spread(grid):
     new_grid = grid.copy()
-    for i in range(grid_size):
-        for j in range(grid_size):
-            if grid[i, j] == 1:
+    for i in range(grid.shape[0]):
+        for j in range(grid.shape[1]):
+            if grid[i, j] == INFECTED:
                 for dx in [-1, 0, 1]:
                     for dy in [-1, 0, 1]:
                         ni, nj = i + dx, j + dy
-                        if 0 <= ni < grid_size and 0 <= nj < grid_size:
-                            if grid[ni, nj] == 0 and np.random.rand() < infection_rate:
-                                new_grid[ni, nj] = 1
-                if np.random.rand() < death_rate:
-                    new_grid[i, j] = 3
-                elif np.random.rand() < 0.1:
-                    new_grid[i, j] = 2
+                        if 0 <= ni < grid.shape[0] and 0 <= nj < grid.shape[1]:
+                            if grid[ni, nj] == HEALTHY and np.random.rand() < spread_chance / 100:
+                                new_grid[ni, nj] = INFECTED
+                new_grid[i, j] = RECOVERED
     return new_grid
 
-placeholder = st.empty()  
+lat_range = np.linspace(city_center["lat"] - 0.05, city_center["lat"] + 0.05, grid_size)
+lon_range = np.linspace(city_center["lon"] - 0.05, city_center["lon"] + 0.05, grid_size)
+lats, lons, colors = [], [], []
 
-steps = 30
-for _ in range(steps):
-    st.session_state.grid = update_grid(st.session_state.grid)
+for i in range(grid_size):
+    for j in range(grid_size):
+        lats.append(lat_range[i])
+        lons.append(lon_range[j])
+        colors.append(status_colors[st.session_state.grid[i, j]])
+
+df = pd.DataFrame({"lat": lats, "lon": lons, "color": colors})
+
+fig = go.Figure(go.Scattermapbox(
+    lat=df["lat"],
+    lon=df["lon"],
+    mode="markers",
+    marker=dict(size=14, color=df["color"]),
+    hoverinfo="none"
+))
+
+fig.update_layout(
+    mapbox_style="open-street-map",
+    mapbox=dict(center=city_center, zoom=12),
+    margin=dict(l=0, r=0, t=0, b=0),
+    height=650
+)
+
+st.plotly_chart(fig)
+
+if st.session_state.step < 20:
+    time.sleep(1)
+    st.session_state.grid = spread(st.session_state.grid)
     st.session_state.step += 1
-
-    fig, ax = plt.subplots()
-    cmap = plt.cm.get_cmap("viridis", 4)
-    ax.imshow(st.session_state.grid, cmap=cmap, vmin=0, vmax=3)
-    ax.set_title(f"{city} - Step {st.session_state.step}")
-    ax.axis("off")
-    placeholder.pyplot(fig) 
-    time.sleep(0.2)
+    st.experimental_rerun()
+else:
+    st.success("Simulation Complete ✅")
 
 st.markdown("""
----
-### 🧭 Legend  
-- 0 (Yellow-Green): Healthy  
-- 1 (Blue): Infected  
-- 2 (Light Purple): Recovered  
-- 3 (Dark Purple): Dead  
+### 🧬 Legend
+- 🟢 Healthy  
+- 🔴 Infected  
+- 🔵 Recovered  
 """)
