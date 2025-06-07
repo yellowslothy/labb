@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-st.set_page_config(page_title="Virus Grid Simulator")
+st.set_page_config(page_title="🦠Virus Grid Simulator")
 st.title("🧍‍♂️ Virus Spread Grid Simulator")
 st.markdown("""
 Each dot represents a person.  
