@@ -36,6 +36,8 @@ def update_grid(grid):
                     new_grid[i, j] = 2
     return new_grid
 
+placeholder = st.empty()  
+
 steps = 30
 for _ in range(steps):
     st.session_state.grid = update_grid(st.session_state.grid)
@@ -43,10 +45,10 @@ for _ in range(steps):
 
     fig, ax = plt.subplots()
     cmap = plt.cm.get_cmap("viridis", 4)
-    im = ax.imshow(st.session_state.grid, cmap=cmap, vmin=0, vmax=3)
+    ax.imshow(st.session_state.grid, cmap=cmap, vmin=0, vmax=3)
     ax.set_title(f"{city} - Step {st.session_state.step}")
     ax.axis("off")
-    st.pyplot(fig)
+    placeholder.pyplot(fig) 
     time.sleep(0.2)
 
 st.markdown("""
