@@ -1,88 +1,85 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-import time
 
 st.set_page_config(page_title="Virus Grid Simulator")
 st.title("🧍‍♂️ Virus Spread Grid Simulator")
 st.markdown("""
 Each dot represents a person. Red = Infected, Green = Healthy, Blue = Recovered, Black = Dead.
-Watch the virus spread over time!
+Watch the virus spread step by step!
 """)
 
-if 'reset' not in st.session_state:
-    st.session_state.reset = False
-
-if st.button("Reset Simulation"):
-    st.session_state.reset = True
-
-if st.session_state.reset:
-    st.session_state.reset = False
-    st.experimental_rerun()
-
-grid_size = st.sidebar.slider("Grid Size (N x N)", 10, 100, 30)
+grid_size = st.sidebar.slider("Grid Size (N x N)", 10, 50, 30)
 infection_radius = st.sidebar.slider("Infection Radius", 1, 5, 1)
 infection_chance = st.sidebar.slider("Infection Chance (%)", 0, 100, 20)
 recovery_time = st.sidebar.slider("Recovery Time (steps)", 5, 30, 10)
 mortality_rate = st.sidebar.slider("Mortality Rate (%)", 0, 100, 5)
 
-grid = np.zeros((grid_size, grid_size), dtype=int)
-timers = np.zeros_like(grid)
+if 'grid' not in st.session_state:
+    st.session_state.grid = np.zeros((grid_size, grid_size), dtype=int)
+    center = grid_size // 2
+    st.session_state.grid[center, center] = 1
+    st.session_state.timers = np.zeros((grid_size, grid_size), dtype=int)
+    st.session_state.step = 0
 
-center = grid_size // 2
-grid[center, center] = 1
-
-plot_area = st.empty()
-
-step = 0
-max_steps = 100
-
-while step < max_steps:
-    new_grid = grid.copy()
-    new_timers = timers.copy()
-
+def simulate_step():
+    grid = st.session_state.grid.copy()
+    timers = st.session_state.timers.copy()
     changes = 0
 
     for i in range(grid_size):
         for j in range(grid_size):
             if grid[i, j] == 1:
-                new_timers[i, j] += 1
+                timers[i, j] += 1
                 for dx in range(-infection_radius, infection_radius + 1):
                     for dy in range(-infection_radius, infection_radius + 1):
                         ni, nj = i + dx, j + dy
                         if 0 <= ni < grid_size and 0 <= nj < grid_size:
                             if grid[ni, nj] == 0 and np.random.rand() < infection_chance / 100:
-                                new_grid[ni, nj] = 1
+                                grid[ni, nj] = 1
                                 changes += 1
-                if new_timers[i, j] >= recovery_time:
+                if timers[i, j] >= recovery_time:
                     if np.random.rand() < mortality_rate / 100:
-                        if new_grid[i, j] != 3:
-                            new_grid[i, j] = 3
+                        if grid[i, j] != 3:
+                            grid[i, j] = 3
                             changes += 1
                     else:
-                        if new_grid[i, j] != 2:
-                            new_grid[i, j] = 2
+                        if grid[i, j] != 2:
+                            grid[i, j] = 2
                             changes += 1
 
-    grid = new_grid
-    timers = new_timers
+    st.session_state.grid = grid
+    st.session_state.timers = timers
+    return changes
 
-    color_map = {0: [0.2, 0.8, 0.2], 1: [1, 0, 0], 2: [0.2, 0.2, 1], 3: [0, 0, 0]}
-    rgb_grid = np.zeros((grid_size, grid_size, 3))
-    for state, color in color_map.items():
-        rgb_grid[grid == state] = color
+col1, col2 = st.columns(2)
 
-    fig, ax = plt.subplots(figsize=(8, 8))
-    ax.imshow(rgb_grid, interpolation='none')
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_title(f"Step {step + 1}")
-    plot_area.pyplot(fig)
-    time.sleep(0.2)
+with col1:
+    if st.button("Next Step"):
+        changes = simulate_step()
+        st.session_state.step += 1
+        if changes == 0:
+            st.warning("No more changes. Simulation ended.")
 
-    step += 1
-    if changes == 0:
-        break
+with col2:
+    if st.button("Reset Simulation"):
+        st.session_state.grid = np.zeros((grid_size, grid_size), dtype=int)
+        center = grid_size // 2
+        st.session_state.grid[center, center] = 1
+        st.session_state.timers = np.zeros((grid_size, grid_size), dtype=int)
+        st.session_state.step = 0
+
+color_map = {0: [0.2, 0.8, 0.2], 1: [1, 0, 0], 2: [0.2, 0.2, 1], 3: [0, 0, 0]}
+rgb_grid = np.zeros((grid_size, grid_size, 3))
+for state, color in color_map.items():
+    rgb_grid[st.session_state.grid == state] = color
+
+fig, ax = plt.subplots(figsize=(8, 8))
+ax.imshow(rgb_grid, interpolation='none')
+ax.set_xticks([])
+ax.set_yticks([])
+ax.set_title(f"Step {st.session_state.step}")
+st.pyplot(fig)
 
 st.markdown("""
 **Legend:**
