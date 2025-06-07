@@ -1,5 +1,3 @@
 streamlit
-streamlit_autorefresh
-plotly
-pandas
 numpy
+pillow
