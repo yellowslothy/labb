@@ -1,53 +1,62 @@
 import streamlit as st
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+import time
 
-st.set_page_config(page_title="Virus Spread Simulator", layout="centered")
-st.title("🦠 Virus Spread Simulator")
+st.set_page_config(page_title="Virus Grid Simulator")
+st.title("🧍‍♂️ Virus Spread Grid Simulator")
 st.markdown("""
-This simulator shows how a virus spreads in a population over time,
-including the number of infected, recovered, and deceased individuals.
+Each dot represents a person. Red = Infected, Green = Healthy, Blue = Recovered, Black = Dead.
+Watch the virus spread over time!
 """)
 
-st.sidebar.header("📊 Simulation Settings")
-population = st.sidebar.number_input("Total Population", min_value=1000, value=10000, step=1000)
-initial_infected = st.sidebar.slider("Initial Infected", 1, population // 2, 10)
-r0 = st.sidebar.slider("Infection Rate (R₀)", 0.5, 5.0, 2.0, step=0.1)
-mortality_rate = st.sidebar.slider("Mortality Rate (%)", 0.0, 20.0, 2.0, step=0.5)
-recovery_days = st.sidebar.slider("Average Recovery Days", 5, 30, 14)
-days = st.sidebar.slider("Simulation Duration (days)", 10, 180, 60)
+grid_size = st.sidebar.slider("Grid Size (N x N)", 10, 100, 30)
+infection_radius = st.sidebar.slider("Infection Radius", 1, 5, 1)
+infection_chance = st.sidebar.slider("Infection Chance (%)", 0, 100, 20)
+recovery_time = st.sidebar.slider("Recovery Time (steps)", 5, 30, 10)
+mortality_rate = st.sidebar.slider("Mortality Rate (%)", 0, 100, 5)
 
-beta = r0 / recovery_days
-mortality = mortality_rate / 100
+grid = np.zeros((grid_size, grid_size), dtype=int)
+timers = np.zeros_like(grid)
 
-S = [population - initial_infected]
-I = [initial_infected]
-R = [0]
-D = [0]
+center = grid_size // 2
+grid[center, center] = 1
 
-for day in range(1, days + 1):
-    new_infected = beta * S[-1] * I[-1] / population
-    new_recovered = I[-1] / recovery_days
-    new_deaths = new_recovered * mortality
-    new_recovered -= new_deaths
+plot_area = st.empty()
+st.button("Reset Simulation", on_click=st.experimental_rerun)
 
-    S.append(S[-1] - new_infected)
-    I.append(I[-1] + new_infected - new_recovered - new_deaths)
-    R.append(R[-1] + new_recovered)
-    D.append(D[-1] + new_deaths)
+for step in range(100):
+    new_grid = grid.copy()
+    new_timers = timers.copy()
 
-fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(S, label="Susceptible (S)", color="skyblue")
-ax.plot(I, label="Infected (I)", color="orange")
-ax.plot(R, label="Recovered (R)", color="green")
-ax.plot(D, label="Deceased (D)", color="red")
-ax.set_xlabel("Days")
-ax.set_ylabel("Number of People")
-ax.set_title("📈 Virus Spread Over Time")
-ax.legend()
-st.pyplot(fig)
+    for i in range(grid_size):
+        for j in range(grid_size):
+            if grid[i, j] == 1:
+                new_timers[i, j] += 1
+                for dx in range(-infection_radius, infection_radius + 1):
+                    for dy in range(-infection_radius, infection_radius + 1):
+                        ni, nj = i + dx, j + dy
+                        if 0 <= ni < grid_size and 0 <= nj < grid_size:
+                            if grid[ni, nj] == 0 and np.random.rand() < infection_chance / 100:
+                                new_grid[ni, nj] = 1
+                if new_timers[i, j] >= recovery_time:
+                    if np.random.rand() < mortality_rate / 100:
+                        new_grid[i, j] = 3
+                    else:
+                        new_grid[i, j] = 2
 
-st.subheader("📌 Summary")
-st.write(f"**Total Infected:** {int(R[-1] + D[-1])} people")
-st.write(f"**Total Recovered:** {int(R[-1])} people")
-st.write(f"**Total Deceased:** {int(D[-1])} people")
+    grid = new_grid
+    timers = new_timers
+
+    color_map = {0: [0.2, 0.8, 0.2], 1: [1, 0, 0], 2: [0.2, 0.2, 1], 3: [0, 0, 0]}
+    rgb_grid = np.zeros((grid_size, grid_size, 3))
+    for state, color in color_map.items():
+        rgb_grid[grid == state] = color
+
+    fig, ax = plt.subplots()
+    ax.imshow(rgb_grid, interpolation='none')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_title(f"Step {step + 1}")
+    plot_area.pyplot(fig)
+    time.sleep(0.2)
