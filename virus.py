@@ -27,9 +27,14 @@ plot_area = st.empty()
 if st.button("Reset Simulation"):
     st.experimental_rerun()
 
-for step in range(100):
+step = 0
+max_steps = 100
+
+while step < max_steps:
     new_grid = grid.copy()
     new_timers = timers.copy()
+
+    changes = 0  # 변화 체크용 변수
 
     for i in range(grid_size):
         for j in range(grid_size):
@@ -41,11 +46,16 @@ for step in range(100):
                         if 0 <= ni < grid_size and 0 <= nj < grid_size:
                             if grid[ni, nj] == 0 and np.random.rand() < infection_chance / 100:
                                 new_grid[ni, nj] = 1
+                                changes += 1
                 if new_timers[i, j] >= recovery_time:
                     if np.random.rand() < mortality_rate / 100:
-                        new_grid[i, j] = 3
+                        if new_grid[i, j] != 3:
+                            new_grid[i, j] = 3
+                            changes += 1
                     else:
-                        new_grid[i, j] = 2
+                        if new_grid[i, j] != 2:
+                            new_grid[i, j] = 2
+                            changes += 1
 
     grid = new_grid
     timers = new_timers
@@ -55,13 +65,17 @@ for step in range(100):
     for state, color in color_map.items():
         rgb_grid[grid == state] = color
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8, 8))  # 그래픽 크기 키움
     ax.imshow(rgb_grid, interpolation='none')
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_title(f"Step {step + 1}")
     plot_area.pyplot(fig)
     time.sleep(0.2)
+
+    step += 1
+    if changes == 0:
+        break
 
 st.markdown("""
 **Legend:**
