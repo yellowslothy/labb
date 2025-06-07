@@ -11,9 +11,9 @@ max_steps = st.slider("Max Steps", 1, 50, 20)
 HEALTHY, INFECTED, RECOVERED = 0, 1, 2
 
 colors = {
-    HEALTHY: (0, 255, 0),      
-    INFECTED: (255, 0, 0),    
-    RECOVERED: (0, 0, 255)    
+    HEALTHY: (0, 255, 0),    
+    INFECTED: (255, 0, 0),     
+    RECOVERED: (0, 0, 255)     
 }
 
 if 'grid' not in st.session_state or st.session_state.get('grid_size', 0) != grid_size:
@@ -42,8 +42,8 @@ def grid_to_image(grid):
     img = np.zeros((grid.shape[0], grid.shape[1], 3), dtype=np.uint8)
     for status, color in colors.items():
         img[grid == status] = color
-    img = np.kron(img, np.ones((20, 20, 1))) 
-    return Image.fromarray(img)
+    img = np.kron(img, np.ones((20, 20, 1), dtype=np.uint8))
+    return Image.fromarray(img.astype(np.uint8))
 
 if st.session_state.step < max_steps:
     if st.button("Next Step"):
