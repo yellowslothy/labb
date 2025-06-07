@@ -62,3 +62,11 @@ for step in range(100):
     ax.set_title(f"Step {step + 1}")
     plot_area.pyplot(fig)
     time.sleep(0.2)
+
+st.markdown("""
+**Legend:**
+- 🟢 Green: Healthy
+- 🔴 Red: Infected
+- 🔵 Blue: Recovered
+- ⚫️ Black: Dead
+""")
