@@ -10,6 +10,16 @@ Each dot represents a person. Red = Infected, Green = Healthy, Blue = Recovered,
 Watch the virus spread over time!
 """)
 
+if 'reset' not in st.session_state:
+    st.session_state.reset = False
+
+if st.button("Reset Simulation"):
+    st.session_state.reset = True
+
+if st.session_state.reset:
+    st.session_state.reset = False
+    st.experimental_rerun()
+
 grid_size = st.sidebar.slider("Grid Size (N x N)", 10, 100, 30)
 infection_radius = st.sidebar.slider("Infection Radius", 1, 5, 1)
 infection_chance = st.sidebar.slider("Infection Chance (%)", 0, 100, 20)
@@ -24,9 +34,6 @@ grid[center, center] = 1
 
 plot_area = st.empty()
 
-if st.button("Reset Simulation"):
-    st.experimental_rerun()
-
 step = 0
 max_steps = 100
 
@@ -34,7 +41,7 @@ while step < max_steps:
     new_grid = grid.copy()
     new_timers = timers.copy()
 
-    changes = 0  # 변화 체크용 변수
+    changes = 0
 
     for i in range(grid_size):
         for j in range(grid_size):
@@ -65,7 +72,7 @@ while step < max_steps:
     for state, color in color_map.items():
         rgb_grid[grid == state] = color
 
-    fig, ax = plt.subplots(figsize=(8, 8))  # 그래픽 크기 키움
+    fig, ax = plt.subplots(figsize=(8, 8))
     ax.imshow(rgb_grid, interpolation='none')
     ax.set_xticks([])
     ax.set_yticks([])
