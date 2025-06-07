@@ -4,48 +4,39 @@ import plotly.express as px
 import numpy as np
 from streamlit_autorefresh import st_autorefresh
 
-st.title("🦠 Virus Spread on World Map")
+st.title("🦠 Global Virus Spread Simulation")
 
-infection_rate = st.slider("Infection Rate (%)", 0, 100, 50) / 100
-death_rate = st.slider("Death Rate (%)", 0, 100, 10) / 100
+infection_rate = st.slider("Infection Rate (%)", 0, 100, 30) / 100
+death_rate = st.slider("Death Rate (%)", 0, 100, 5) / 100
 
 data = {
-    "city": ["Seoul", "New York", "London", "Tokyo", "Paris"],
-    "lat": [37.5665, 40.7128, 51.5074, 35.6895, 48.8566],
-    "lon": [126.9780, -74.0060, -0.1278, 139.6917, 2.3522],
-    "status": [0]*5
+    "city": ["Seoul", "New York", "London", "Tokyo", "Paris", "Sydney", "Cairo", "Moscow", "Rio de Janeiro", "Toronto"],
+    "lat": [37.5665, 40.7128, 51.5074, 35.6895, 48.8566, -33.8688, 30.0444, 55.7558, -22.9068, 43.6532],
+    "lon": [126.9780, -74.0060, -0.1278, 139.6917, 2.3522, 151.2093, 31.2357, 37.6173, -43.1729, -79.3832],
+    "status": [0]*10 
 }
 
 df = pd.DataFrame(data)
 
-start_city = st.selectbox("Select Patient Zero City:", df['city'])
-
 if 'step' not in st.session_state:
     st.session_state.step = 0
-    st.session_state.start_city = start_city
-    st.session_state.status = [0]*5
-    patient_zero_idx = df.index[df['city'] == start_city][0]
-    st.session_state.status[patient_zero_idx] = 1
-
-if start_city != st.session_state.start_city:
-    st.session_state.step = 0
-    st.session_state.start_city = start_city
-    st.session_state.status = [0]*5
-    patient_zero_idx = df.index[df['city'] == start_city][0]
-    st.session_state.status[patient_zero_idx] = 1
+    st.session_state.status = [0]*len(df)
+    initially_infected = np.random.choice(len(df), size=2, replace=False)
+    for idx in initially_infected:
+        st.session_state.status[idx] = 1
 
 count = st_autorefresh(interval=1000, limit=30, key="refresh")
 
 def spread_virus(status_list, infection_rate, death_rate):
     new_status = status_list.copy()
     for i, s in enumerate(status_list):
-        if s == 1: 
+        if s == 1:
             for j in range(len(status_list)):
-                if status_list[j] == 0: 
+                if status_list[j] == 0:
                     if np.random.rand() < infection_rate:
                         new_status[j] = 1
             if np.random.rand() < death_rate:
-                new_status[i] = 3 
+                new_status[i] = 3
             else:
                 if np.random.rand() < 0.1:
                     new_status[i] = 2
@@ -66,7 +57,7 @@ fig = px.scatter_geo(df,
                      color='color',
                      size=[20]*len(df),
                      projection="natural earth",
-                     title=f"Step {st.session_state.step}")
+                     title=f"Global Spread - Step {st.session_state.step}")
 
 fig.update_layout(legend_title_text='Status')
 
