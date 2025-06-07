@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import time
 
 st.title("🦠 Virus Spread on World Map")
 
@@ -55,9 +54,9 @@ fig.update_layout(title=f"Step {st.session_state.step + 1}",
 st.plotly_chart(fig)
 
 if st.session_state.step < 4:
-    time.sleep(1)
-    st.session_state.step += 1
-    st.experimental_rerun()
+    if st.button("Next Step"):
+        st.session_state.step += 1
+        st.experimental_rerun()
 else:
     st.success("Simulation complete!")
 
