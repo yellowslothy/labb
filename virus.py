@@ -23,7 +23,9 @@ center = grid_size // 2
 grid[center, center] = 1
 
 plot_area = st.empty()
-st.button("Reset Simulation", on_click=st.experimental_rerun)
+
+if st.button("Reset Simulation"):
+    st.experimental_rerun()
 
 for step in range(100):
     new_grid = grid.copy()
