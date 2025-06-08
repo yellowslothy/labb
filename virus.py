@@ -15,7 +15,8 @@ if "simulation_stats" not in st.session_state:
 if "simulation_frames" not in st.session_state:
     st.session_state["simulation_frames"] = None
 if "mode" not in st.session_state:
-    st.session_state["mode"] = "animation" 
+    st.session_state["mode"] = "animation"  
+
 
 st.sidebar.header("바이러스 설정")
 infection_rate = st.sidebar.slider("전염률", 0.0, 1.0, 0.2, 0.01)
@@ -33,10 +34,13 @@ def simulate(population_size, infection_rate, fatality_rate, initial_infected, d
         grid[x, y] = INFECTED
 
     frames = [grid.copy()]
-    infected = np.count_nonzero(grid == INFECTED)
-    recovered = np.count_nonzero(grid == RECOVERED)
-    dead = np.count_nonzero(grid == DEAD)
-    stats = [(infected, recovered, dead)]
+    stats = [
+        (
+            np.count_nonzero(grid == INFECTED),
+            np.count_nonzero(grid == RECOVERED),
+            np.count_nonzero(grid == DEAD),
+        )
+    ]
 
     for _ in range(days):
         new_grid = grid.copy()
@@ -70,10 +74,10 @@ def simulate(population_size, infection_rate, fatality_rate, initial_infected, d
 
 def display_animation(frames):
     colors = {
-        SUSCEPTIBLE: [1, 1, 1],
-        INFECTED: [1, 0, 0],
-        RECOVERED: [0, 1, 0],
-        DEAD: [0.2, 0.2, 0.2]
+        SUSCEPTIBLE: [1, 1, 1],  
+        INFECTED: [1, 0, 0],    
+        RECOVERED: [0, 1, 0],    
+        DEAD: [0.2, 0.2, 0.2]   
     }
 
     placeholder = st.empty()
@@ -121,7 +125,7 @@ if start_simulation:
     st.session_state["mode"] = "animation"
     st.success(f"✅ 시뮬레이션 완료! (총 {len(frames)}일 경과)")
 
-if st.session_state["simulation_stats"] is not None:
+if st.session_state["simulation_stats"] is not None and st.session_state["simulation_frames"] is not None:
     if st.session_state["mode"] == "animation":
         if st.button("📊 그래프로 보기"):
             st.session_state["mode"] = "graph"
@@ -129,8 +133,10 @@ if st.session_state["simulation_stats"] is not None:
         if st.button("🎞️ 애니메이션으로 돌아가기"):
             st.session_state["mode"] = "animation"
 
-if st.session_state["simulation_stats"] is not None:
+if st.session_state["simulation_stats"] is not None and st.session_state["simulation_frames"] is not None:
     if st.session_state["mode"] == "animation":
         display_animation(st.session_state["simulation_frames"])
     elif st.session_state["mode"] == "graph":
         show_graph(st.session_state["simulation_stats"])
+else:
+    st.info("먼저 사이드바에서 '시뮬레이션 시작' 버튼을 눌러 시뮬레이션을 실행하세요.")
