@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-# 상태 정의
 SUSCEPTIBLE = 0
 INFECTED = 1
 RECOVERED = 2
@@ -11,7 +10,9 @@ DEAD = 3
 
 st.title("🦠 가상 바이러스 확산 시뮬레이터")
 
-# 사이드바 입력
+if "simulation_stats" not in st.session_state:
+    st.session_state["simulation_stats"] = None
+
 st.sidebar.header("바이러스 설정")
 infection_rate = st.sidebar.slider("전염률", 0.0, 1.0, 0.2, 0.01)
 fatality_rate = st.sidebar.slider("치명률", 0.0, 1.0, 0.05, 0.01)
@@ -20,7 +21,6 @@ population_size = st.sidebar.slider("인구 격자 크기 (NxN)", 10, 100, 50)
 days = st.sidebar.slider("시뮬레이션 일수", 1, 100, 50)
 start_simulation = st.sidebar.button("시뮬레이션 시작")
 
-# 시뮬레이션 로직
 def simulate(population_size, infection_rate, fatality_rate, initial_infected, days):
     grid = np.zeros((population_size, population_size), dtype=int)
     infected_indices = np.random.choice(population_size**2, initial_infected, replace=False)
@@ -29,8 +29,6 @@ def simulate(population_size, infection_rate, fatality_rate, initial_infected, d
         grid[x, y] = INFECTED
 
     frames = [grid.copy()]
-    
-    # 초기 상태 통계 저장
     infected = np.count_nonzero(grid == INFECTED)
     recovered = np.count_nonzero(grid == RECOVERED)
     dead = np.count_nonzero(grid == DEAD)
@@ -66,13 +64,12 @@ def simulate(population_size, infection_rate, fatality_rate, initial_infected, d
 
     return frames, stats
 
-# 애니메이션 출력
 def display_animation(frames):
     colors = {
-        SUSCEPTIBLE: [1, 1, 1],   # 흰색
-        INFECTED: [1, 0, 0],      # 빨간색
-        RECOVERED: [0, 1, 0],     # 초록색
-        DEAD: [0.2, 0.2, 0.2]     # 회색
+        SUSCEPTIBLE: [1, 1, 1],
+        INFECTED: [1, 0, 0],
+        RECOVERED: [0, 1, 0],
+        DEAD: [0.2, 0.2, 0.2]
     }
 
     placeholder = st.empty()
@@ -97,7 +94,6 @@ def display_animation(frames):
     col3.markdown("🟩 회복된 사람")
     col4.markdown("⬛️ 사망한 사람")
 
-# 그래프 출력
 def show_graph(stats):
     stats = np.array(stats)
     days = np.arange(1, len(stats) + 1)
@@ -113,12 +109,15 @@ def show_graph(stats):
     ax.legend()
     st.pyplot(fig)
 
-# 실행
 if start_simulation:
     st.write("⏳ 시뮬레이션 진행 중...")
     frames, stats = simulate(population_size, infection_rate, fatality_rate, initial_infected, days)
+    st.session_state["simulation_stats"] = stats  
     display_animation(frames)
     st.success(f"✅ 시뮬레이션 완료! (총 {len(frames)}일 경과)")
 
-    if st.button("📊 그래프로 보기"):
-        show_graph(stats)
+if st.button("📊 그래프로 보기"):
+    if st.session_state["simulation_stats"] is not None:
+        show_graph(st.session_state["simulation_stats"])
+    else:
+        st.warning("⚠️ 먼저 시뮬레이션을 실행해주세요!")
