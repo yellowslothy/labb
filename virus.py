@@ -12,6 +12,10 @@ st.title("🦠 가상 바이러스 확산 시뮬레이터")
 
 if "simulation_stats" not in st.session_state:
     st.session_state["simulation_stats"] = None
+if "simulation_frames" not in st.session_state:
+    st.session_state["simulation_frames"] = None
+if "mode" not in st.session_state:
+    st.session_state["mode"] = "animation" 
 
 st.sidebar.header("바이러스 설정")
 infection_rate = st.sidebar.slider("전염률", 0.0, 1.0, 0.2, 0.01)
@@ -112,12 +116,21 @@ def show_graph(stats):
 if start_simulation:
     st.write("⏳ 시뮬레이션 진행 중...")
     frames, stats = simulate(population_size, infection_rate, fatality_rate, initial_infected, days)
-    st.session_state["simulation_stats"] = stats  
-    display_animation(frames)
+    st.session_state["simulation_stats"] = stats
+    st.session_state["simulation_frames"] = frames
+    st.session_state["mode"] = "animation"
     st.success(f"✅ 시뮬레이션 완료! (총 {len(frames)}일 경과)")
 
-if st.button("📊 그래프로 보기"):
-    if st.session_state["simulation_stats"] is not None:
+if st.session_state["simulation_stats"] is not None:
+    if st.session_state["mode"] == "animation":
+        if st.button("📊 그래프로 보기"):
+            st.session_state["mode"] = "graph"
+    elif st.session_state["mode"] == "graph":
+        if st.button("🎞️ 애니메이션으로 돌아가기"):
+            st.session_state["mode"] = "animation"
+
+if st.session_state["simulation_stats"] is not None:
+    if st.session_state["mode"] == "animation":
+        display_animation(st.session_state["simulation_frames"])
+    elif st.session_state["mode"] == "graph":
         show_graph(st.session_state["simulation_stats"])
-    else:
-        st.warning("⚠️ 먼저 시뮬레이션을 실행해주세요!")
