@@ -26,6 +26,8 @@ def simulate(population_size, infection_rate, fatality_rate, initial_infected, d
         grid[x, y] = INFECTED
     
     frames = []
+    frames.append(grid.copy())
+
     for _ in range(days):
         new_grid = grid.copy()
         for i in range(population_size):
@@ -41,6 +43,11 @@ def simulate(population_size, infection_rate, fatality_rate, initial_infected, d
                         new_grid[i, j] = DEAD
                     else:
                         new_grid[i, j] = RECOVERED
+        
+        if np.array_equal(new_grid, grid) or np.count_nonzero(new_grid == INFECTED) == 0:
+            frames.append(new_grid.copy())
+            break
+
         grid = new_grid
         frames.append(grid.copy())
     return frames
@@ -48,8 +55,8 @@ def simulate(population_size, infection_rate, fatality_rate, initial_infected, d
 def display_animation(frames):
     colors = {
         SUSCEPTIBLE: [1, 1, 1],       
-        INFECTED: [1, 0, 0],         
-        RECOVERED: [0, 1, 0],        
+        INFECTED: [1, 0, 0],          
+        RECOVERED: [0, 1, 0],         
         DEAD: [0.2, 0.2, 0.2]        
     }
 
@@ -68,8 +75,16 @@ def display_animation(frames):
         placeholder.pyplot(fig)
         time.sleep(0.1)
 
+    st.markdown("---")
+    st.markdown("### 🧾 상태 설명 (색상)")
+    col1, col2, col3, col4 = st.columns(4)
+    col1.markdown("⬜️ 건강한 사람")
+    col2.markdown("🟥 감염된 사람")
+    col3.markdown("🟩 회복된 사람")
+    col4.markdown("⬛️ 사망한 사람")
+
 if start_simulation:
     st.write("⏳ 시뮬레이션 진행 중...")
     frames = simulate(population_size, infection_rate, fatality_rate, initial_infected, days)
     display_animation(frames)
-    st.success("✅ 시뮬레이션 완료!")
+    st.success(f"✅ 시뮬레이션 완료! (총 {len(frames)}일 경과)")
