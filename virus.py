@@ -113,7 +113,7 @@ def show_graph(stats):
 
     ax.set_xlabel("day")
     ax.set_ylabel("people")
-    ax.set_title("📊 Daily Status Changes")
+    ax.set_title("Daily Status Changes")
     ax.legend()
     st.pyplot(fig)
 
