@@ -107,13 +107,13 @@ def show_graph(stats):
     days = np.arange(1, len(stats) + 1)
 
     fig, ax = plt.subplots()
-    ax.plot(days, stats[:, 0], 'r-', label="감염자 수")
-    ax.plot(days, stats[:, 1], 'g-', label="회복자 수")
-    ax.plot(days, stats[:, 2], 'k-', label="사망자 수")
+    ax.plot(days, stats[:, 0], 'r-', label="infected")
+    ax.plot(days, stats[:, 1], 'g-', label="healthy")
+    ax.plot(days, stats[:, 2], 'k-', label="death")
 
-    ax.set_xlabel("일차")
-    ax.set_ylabel("사람 수")
-    ax.set_title("📊 일별 상태 변화")
+    ax.set_xlabel("day")
+    ax.set_ylabel("people")
+    ax.set_title("📊 Daily Status Changes")
     ax.legend()
     st.pyplot(fig)
 
