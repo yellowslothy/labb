@@ -3,12 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-st.title("🦠 가상 바이러스 확산 시뮬레이터")
-
 SUSCEPTIBLE = 0
 INFECTED = 1
 RECOVERED = 2
 DEAD = 3
+
+st.title("🦠 가상 바이러스 확산 시뮬레이터")
 
 st.sidebar.header("바이러스 설정")
 infection_rate = st.sidebar.slider("전염률", 0.0, 1.0, 0.2, 0.01)
@@ -25,8 +25,8 @@ def simulate(population_size, infection_rate, fatality_rate, initial_infected, d
         x, y = divmod(idx, population_size)
         grid[x, y] = INFECTED
     
-    frames = []
-    frames.append(grid.copy())
+    frames = [grid.copy()]
+    stats = []
 
     for _ in range(days):
         new_grid = grid.copy()
@@ -44,20 +44,26 @@ def simulate(population_size, infection_rate, fatality_rate, initial_infected, d
                     else:
                         new_grid[i, j] = RECOVERED
         
-        if np.array_equal(new_grid, grid) or np.count_nonzero(new_grid == INFECTED) == 0:
-            frames.append(new_grid.copy())
+        frames.append(new_grid.copy())
+
+        infected = np.count_nonzero(new_grid == INFECTED)
+        recovered = np.count_nonzero(new_grid == RECOVERED)
+        dead = np.count_nonzero(new_grid == DEAD)
+        stats.append((infected, recovered, dead))
+
+        if np.array_equal(new_grid, grid) or infected == 0:
             break
 
         grid = new_grid
-        frames.append(grid.copy())
-    return frames
+
+    return frames, stats
 
 def display_animation(frames):
     colors = {
-        SUSCEPTIBLE: [1, 1, 1],       
-        INFECTED: [1, 0, 0],          
-        RECOVERED: [0, 1, 0],         
-        DEAD: [0.2, 0.2, 0.2]        
+        SUSCEPTIBLE: [1, 1, 1],
+        INFECTED: [1, 0, 0],
+        RECOVERED: [0, 1, 0],
+        DEAD: [0.2, 0.2, 0.2]
     }
 
     placeholder = st.empty()
@@ -65,13 +71,13 @@ def display_animation(frames):
         rgb_grid = np.zeros((frame.shape[0], frame.shape[1], 3))
         for state, color in colors.items():
             rgb_grid[frame == state] = color
-        
+
         fig, ax = plt.subplots()
         ax.imshow(rgb_grid)
         ax.set_xticks([])
         ax.set_yticks([])
         ax.set_title(f"Day {day + 1}")
-        
+
         placeholder.pyplot(fig)
         time.sleep(0.1)
 
@@ -83,8 +89,26 @@ def display_animation(frames):
     col3.markdown("🟩 회복된 사람")
     col4.markdown("⬛️ 사망한 사람")
 
+def show_graph(stats):
+    stats = np.array(stats)
+    days = np.arange(1, len(stats) + 1)
+
+    fig, ax = plt.subplots()
+    ax.plot(days, stats[:, 0], 'r-', label="감염자 수")
+    ax.plot(days, stats[:, 1], 'g-', label="회복자 수")
+    ax.plot(days, stats[:, 2], 'k-', label="사망자 수")
+
+    ax.set_xlabel("일차")
+    ax.set_ylabel("사람 수")
+    ax.set_title("📊 일별 상태 변화")
+    ax.legend()
+    st.pyplot(fig)
+
 if start_simulation:
     st.write("⏳ 시뮬레이션 진행 중...")
-    frames = simulate(population_size, infection_rate, fatality_rate, initial_infected, days)
+    frames, stats = simulate(population_size, infection_rate, fatality_rate, initial_infected, days)
     display_animation(frames)
     st.success(f"✅ 시뮬레이션 완료! (총 {len(frames)}일 경과)")
+
+    if st.button("📊 그래프로 보기"):
+        show_graph(stats)
