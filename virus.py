@@ -102,6 +102,26 @@ def display_animation(frames):
     col3.markdown("🟩 회복된 사람")
     col4.markdown("⬛️ 사망한 사람")
 
+    total = frames[-1].size
+    susceptible_count = np.count_nonzero(frames[-1] == SUSCEPTIBLE)
+    infected_count = np.count_nonzero(frames[-1] == INFECTED)
+    recovered_count = np.count_nonzero(frames[-1] == RECOVERED)
+    dead_count = np.count_nonzero(frames[-1] == DEAD)
+
+    susceptible_ratio = susceptible_count / total * 100
+    infected_ratio = infected_count / total * 100
+    recovered_ratio = recovered_count / total * 100
+    dead_ratio = dead_count / total * 100
+
+    st.markdown("---")
+    st.markdown(
+        f"### 📊 최종 상태 비율\n"
+        f"- 건강한 사람: {susceptible_ratio:.2f}%\n"
+        f"- 감염된 사람: {infected_ratio:.2f}%\n"
+        f"- 회복된 사람: {recovered_ratio:.2f}%\n"
+        f"- 사망한 사람: {dead_ratio:.2f}%"
+    )
+
 def show_graph(stats):
     stats = np.array(stats)
     days = np.arange(1, len(stats) + 1)
